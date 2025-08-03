@@ -141,7 +141,7 @@ if all(val is not None for val in [chip_16k, chip_21k, chip_32k]):
         prediction_df["percentile"] = prediction_df["chipTime_42k"].rank(pct=True) * 100
         percentile = prediction_df.loc[prediction_df["runner_id"] == predicted_runner_id, "percentile"].values[0].round(2)
 
-        c = alt.Chart(all_runners_chart, title = f"Your predicted finish time is at the top {percentile:.2f}% of All Runners.").mark_bar().encode(
+        c = alt.Chart(all_runners_chart, title = f"You are top {percentile:.2f}% of All Runners.").mark_bar().encode(
             x=alt.X("Time:N", axis=alt.Axis(title="Predicted Finish Time", labelAngle=-60)),
             y=alt.Y("Total:Q", axis=alt.Axis(title="Number of Runners")),
             color=color
@@ -151,7 +151,7 @@ if all(val is not None for val in [chip_16k, chip_21k, chip_32k]):
         gender_df["percentile"] = gender_df["chipTime_42k"].rank(pct=True) * 100
         percentile = gender_df.loc[gender_df["runner_id"] == predicted_runner_id, "percentile"].values[0].round(2)
 
-        c2 = alt.Chart(gender_runners_chart, title = f'Your predicted finish time is at the top {percentile:.2f}% {gender} Runners.').mark_bar().encode(
+        c2 = alt.Chart(gender_runners_chart, title = f'You are top {percentile:.2f}% all {gender} Runners.').mark_bar().encode(
             x=alt.X("Time:N", axis=alt.Axis(title="Predicted Finish Time", labelAngle=-60)),
             y=alt.Y("Total:Q", axis=alt.Axis(title="Number of Runners")),
             color=color
@@ -161,7 +161,7 @@ if all(val is not None for val in [chip_16k, chip_21k, chip_32k]):
         city_df["percentile"] = city_df["chipTime_42k"].rank(pct=True) * 100
         percentile = city_df.loc[city_df["runner_id"] == predicted_runner_id, "percentile"].values[0].round(2)
 
-        c3 = alt.Chart(city_runners_chart, title = f'Your predicted finish time is at the top {percentile:.2f}% {city} Runners.').mark_bar().encode(
+        c3 = alt.Chart(city_runners_chart, title = f'You are top {percentile:.2f}% {city} Runners.').mark_bar().encode(
             x=alt.X("Time:N", axis=alt.Axis(title="Predicted Finish Time", labelAngle=-60)),
             y=alt.Y("Total:Q", axis=alt.Axis(title="Number of Runners")),
             color=color
