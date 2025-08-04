@@ -132,15 +132,17 @@ if st.button("Predict Marathon Time"):
 
         # Get city one-hot columns
         city_cols = [col for col in prediction_df.columns if col.startswith('city_')]
+        age_cols = [col for col in prediction_df.columns if col.startswith('age_')]
         gender_cols = [col for col in prediction_df.columns if col.startswith('gender_')]
 
         # Get the target city column where it's 1 for the given runner_id
         target_city_col = prediction_df.loc[prediction_df['runner_id'] == predicted_runner_id, city_cols].eq(1).idxmax(axis=1).values[0]
+        target_age_col = prediction_df.loc[prediction_df['runner_id'] == predicted_runner_id, age_cols].eq(1).idxmax(axis=1).values[0]
         target_gender_col = prediction_df.loc[prediction_df['runner_id'] == predicted_runner_id, gender_cols].eq(1).idxmax(axis=1).values[0]
 
-        # Filter all rows where that same city column is 1
-        city_runners_chart = prediction_df[prediction_df[target_city_col] == True].groupby('Time')['runner_id'].nunique().reset_index(name = 'Total')
         gender_runners_chart = prediction_df[prediction_df[target_gender_col] == True].groupby('Time')['runner_id'].nunique().reset_index(name = 'Total')
+        age_runners_chart = prediction_df[prediction_df[target_age_col] == True].groupby('Time')['runner_id'].nunique().reset_index(name = 'Total')
+        city_runners_chart = prediction_df[prediction_df[target_city_col] == True].groupby('Time')['runner_id'].nunique().reset_index(name = 'Total')
 
 
         color = alt.condition(
@@ -198,11 +200,33 @@ if st.button("Predict Marathon Time"):
         )
 
         c2 = alt.Chart(gender_runners_chart).mark_bar(cornerRadiusEnd = cornerRadiusEnd).encode(
-            x=alt.X("Time:N", axis=alt.Axis(title=f"Predicted Finish Time of  {gender} Runners", labelAngle=-60)),
+            x=alt.X("Time:N", axis=alt.Axis(title=f"Predicted Finish Time of {gender} Runners", labelAngle=-60)),
             y=alt.Y("Total:Q", axis=alt.Axis(title="Number of Runners")),
             color=color
         )
         st.altair_chart(c2)
+
+        age_df = prediction_df[prediction_df[target_age_col] == True]
+        age_df["percentile"] = age_df["chipTime_42k"].rank(pct=True) * 100
+        percentile = age_df.loc[age_df["runner_id"] == predicted_runner_id, "percentile"].values[0].round(2)
+        total_runners = age_df['runner_id'].nunique()
+        total_rank =  age_df[age_df['percentile']<= percentile]['runner_id'].nunique()
+        percentile = 100 - percentile
+
+        st.markdown(
+            f"""
+                    You'll run faster than <span style='font-size:20px; font-weight:bold;'> {percentile:.2f}%</span> of all {age_group} runners.
+                    """,
+            unsafe_allow_html=True,
+            help=f'You will place {total_rank} out of {total_runners}.'
+        )
+
+        c3 = alt.Chart(age_runners_chart).mark_bar(cornerRadiusEnd=cornerRadiusEnd).encode(
+            x=alt.X("Time:N", axis=alt.Axis(title=f"Predicted Finish Time of {age_group} Runners", labelAngle=-60)),
+            y=alt.Y("Total:Q", axis=alt.Axis(title="Number of Runners")),
+            color=color
+        )
+        st.altair_chart(c3)
 
         city_df = prediction_df[prediction_df[target_city_col] == True]
         city_df["percentile"] = city_df["chipTime_42k"].rank(pct=True) * 100
@@ -218,13 +242,13 @@ if st.button("Predict Marathon Time"):
             unsafe_allow_html=True,
             help = f'You will place {total_rank} out of {total_runners}.'
         )
-        c3 = alt.Chart(city_runners_chart).mark_bar(cornerRadiusEnd = cornerRadiusEnd).encode(
+        c4 = alt.Chart(city_runners_chart).mark_bar(cornerRadiusEnd = cornerRadiusEnd).encode(
             x=alt.X("Time:N", axis=alt.Axis(title=f"Predicted Finish Time of {city} Runners", labelAngle=-60)),
             y=alt.Y("Total:Q", axis=alt.Axis(title="Number of Runners")),
             color=color
         )
         if city in ['Manila', 'Cagayan de Oro']:
-            st.altair_chart(c3)
+            st.altair_chart(c4)
         else:
             pass
 
