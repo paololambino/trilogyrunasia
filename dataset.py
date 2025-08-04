@@ -27,9 +27,9 @@ def get_data():
                 "32k": {"eventId": "73282", "raceId": "217259"}
             },
             "2025": {
-                "16k": {"eventId": "85809", "raceId": "223772"},
-                "21k": {"eventId": "87034", "raceId": "228307"},
-                "32k": {"eventId": "87040", "raceId": "234242"}
+                "16k": {"eventId": "85811", "raceId": "223222"},
+                "21k": {"eventId": "86868", "raceId": "227059"},
+                "32k": {"eventId": "86869", "raceId": "235760"}
             }
         },
         "Iloilo-Bacolod": {
@@ -94,7 +94,10 @@ def get_data():
                     start += 1000
 
                 if race_data:
-                    race_df = pd.DataFrame.from_records(race_data)[['name', 'genderSexId', 'chipTime', 'division']]
+                    race_df = pd.DataFrame.from_records(race_data)
+                    if 'gender' in race_df.columns and 'genderSexId' not in race_df.columns:
+                        race_df['genderSexId'] = race_df['gender']
+                    race_df = race_df[['name', 'genderSexId', 'chipTime', 'division']]
                     race_df["city"] = city
                     race_df["year"] = year
                     race_df = race_df[race_df['chipTime'] != '']
@@ -133,11 +136,13 @@ def get_data():
     df_final = df_final[(df_final['chipTime_16k'].notnull()) &
                         (df_final['chipTime_21k'].notnull()) &
                         (df_final['chipTime_32k'].notnull())]
-    df_final = df_final.sort_values(by=['chipTime_32k', 'chipTime_21k', 'chipTime_16k']).groupby('name').head(
-        1)  # grouping by the runner
+    df_final = df_final.sort_values(by=['chipTime_32k', 'chipTime_21k', 'chipTime_16k']).groupby('name').head(1)  # grouping by the runner
     df_final = df_final.reset_index().rename(columns={"index": "id", 'genderSexId': 'gender'})  # renaming columns
-    df_final = df_final[df_final['division'] != '17 and Below Male']
+    df_final = df_final[~df_final['division'].isin(['17 and Below Male','19 Below Male', '70+ Male'])]
+    df_final = df_final[df_final['division'].notnull()]
     df_final['age'] = df_final['division'].str[:5]
+    df_final['age'] = df_final['age'].replace({'20-24': '18-24'})
+
 
     df_final = df_final.drop(columns=['name','division'])  # dropping names of runners for privacy
 

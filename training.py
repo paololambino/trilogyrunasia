@@ -36,5 +36,6 @@ def train_model(df):
 
 import pandas as pd
 df = get_data()
+df.to_csv('dataset.csv')
 df = engineer_features(df)
 train_model(df)

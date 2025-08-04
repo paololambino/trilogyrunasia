@@ -16,7 +16,6 @@ st.image("trilogyrunbanner.png", use_container_width=True)
 
 st.title("Trilogy Run Asia Marathon Time Predictor")
 
-
 col1, col2 = st.columns(2)
 with col1:
 
@@ -47,11 +46,7 @@ with col1:
 # Helper to convert HH:MM:SS → total seconds
 def get_chip_time(label):
     user_input = st.text_input(f"{label} Chip Time (HH:MM:SS)", value="00:00:00")
-    try:
-        return user_input
-    except:
-        st.error(f"Please enter {label} chip time in HH:MM:SS format.")
-        return None
+    return user_input
 
 with col2:
     #st.markdown("Enter your chip times below (HH:MM:SS format):")
@@ -64,26 +59,42 @@ with col2:
 
 
 # Only predict if all chip times are valid
-if all(val is not None for val in [chip_16k, chip_21k, chip_32k]):
-    input_df = pd.DataFrame([{
-        "chipTime_16k": chip_16k,
-        "chipTime_21k": chip_21k,
-        "chipTime_32k": chip_32k,
-        "gender": gender,
-        "age": age_group,
-        "city": city,
-        "chipTime_42k": ""
-    }])
-    input_df = engineer_features(input_df)
-    input_df = input_df.drop(columns=['chipTime_42k'])
-    input_df = input_df.reindex(columns=features, fill_value=0)
-    input_df = input_df[features]
-    input_df['chipTime_42k'] = model.predict(input_df)
+if st.button("Predict Marathon Time"):
+    invalid_fields = []
+    if gender is None:
+        invalid_fields.append("Gender")
+    if age_group is None:
+        invalid_fields.append("Age Group")
+    if city is None:
+        invalid_fields.append("City")
+    if chip_16k == "00:00:00":
+        invalid_fields.append("16K Time")
+    if chip_21k == "00:00:00":
+        invalid_fields.append("21K Time")
+    if chip_32k == "00:00:00":
+        invalid_fields.append("32K Time")
 
-    if st.button("Predict 42K Chip Time"):
+    if invalid_fields:
+        st.error("Please complete the following fields: " + ", ".join(invalid_fields))
+
+    else:
+        input_df = pd.DataFrame([{
+            "chipTime_16k": chip_16k,
+            "chipTime_21k": chip_21k,
+            "chipTime_32k": chip_32k,
+            "gender": gender,
+            "age": age_group,
+            "city": city,
+            "chipTime_42k": ""
+        }])
+        input_df = engineer_features(input_df)
+        input_df = input_df.drop(columns=['chipTime_42k'])
+        input_df = input_df.reindex(columns=features, fill_value=0)
+        input_df = input_df[features]
+        input_df['chipTime_42k'] = model.predict(input_df)
+
         prediction = input_df['chipTime_42k'][0]
         predicted_time = str(datetime.timedelta(seconds=int(prediction)))
-        st.success(f"Predicted Marathon Chip Time: {predicted_time}")
 
         prediction_df = pd.read_csv("predictions.csv")
         prediction_df = pd.concat([prediction_df,input_df])
@@ -134,43 +145,85 @@ if all(val is not None for val in [chip_16k, chip_21k, chip_32k]):
 
         color = alt.condition(
             alt.datum.Time == predicted_runner_time,
-            alt.value("#8FC740"),
-            alt.value("#0992D8")
+            alt.value("#F17036"),
+            alt.value("#0992D8") #1F2353
         )
+        cornerRadiusEnd = 15
 
+        st.markdown(
+            f"""
+            <div style='background-color:#d4edda; padding:15px; border-radius:5px; color:#155724;'>
+                <span style='font-size:22px; font-weight:normal;'>
+                    🎉 Predicted Marathon Time: <span style='font-size:20px; font-weight:bold;'> {predicted_time:}</span>
+                </span>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        st.write("")
+        prediction_df = prediction_df.sort_values(by='chipTime_42k')
         prediction_df["percentile"] = prediction_df["chipTime_42k"].rank(pct=True) * 100
         percentile = prediction_df.loc[prediction_df["runner_id"] == predicted_runner_id, "percentile"].values[0].round(2)
+        total_runners = prediction_df['runner_id'].nunique()
+        total_rank =  prediction_df[prediction_df['percentile']<= percentile]['runner_id'].nunique()
+        percentile = 100 - percentile
+        st.markdown(
+            f"""
+            You ran faster than  <span style='font-size:20px; font-weight:bold;'> {percentile:.2f}%</span> of all runners.
+            """,
+            unsafe_allow_html=True,
+            help = f'You place {total_rank} out of {total_runners}.'
+        )
 
-        c = alt.Chart(all_runners_chart, title = f"You are top {percentile:.2f}% of All Runners.").mark_bar().encode(
-            x=alt.X("Time:N", axis=alt.Axis(title="Predicted Finish Time", labelAngle=-60)),
+        c = alt.Chart(all_runners_chart).mark_bar(cornerRadiusEnd = cornerRadiusEnd).encode(
+            x=alt.X("Time:N", axis=alt.Axis(title="Predicted Finish Time of All Runners", labelAngle=-60)),
             y=alt.Y("Total:Q", axis=alt.Axis(title="Number of Runners")),
             color=color
         )
+        st.altair_chart(c)
 
         gender_df = prediction_df[prediction_df[target_gender_col] == True]
         gender_df["percentile"] = gender_df["chipTime_42k"].rank(pct=True) * 100
         percentile = gender_df.loc[gender_df["runner_id"] == predicted_runner_id, "percentile"].values[0].round(2)
+        total_runners = gender_df['runner_id'].nunique()
+        total_rank =  gender_df[gender_df['percentile']<= percentile]['runner_id'].nunique()
+        percentile = 100 - percentile
 
-        c2 = alt.Chart(gender_runners_chart, title = f'You are top {percentile:.2f}% all {gender} Runners.').mark_bar().encode(
-            x=alt.X("Time:N", axis=alt.Axis(title="Predicted Finish Time", labelAngle=-60)),
+        st.markdown(
+            f"""
+            You ran faster than <span style='font-size:20px; font-weight:bold;'> {percentile:.2f}%</span> of all {gender} runners.
+            """,
+            unsafe_allow_html=True,
+            help = f'You place {total_rank} out of {total_runners}.'
+        )
+
+        c2 = alt.Chart(gender_runners_chart).mark_bar(cornerRadiusEnd = cornerRadiusEnd).encode(
+            x=alt.X("Time:N", axis=alt.Axis(title=f"Predicted Finish Time of  {gender} Runners", labelAngle=-60)),
             y=alt.Y("Total:Q", axis=alt.Axis(title="Number of Runners")),
             color=color
         )
+        st.altair_chart(c2)
 
-        city_df = prediction_df[prediction_df[target_gender_col] == True]
+        city_df = prediction_df[prediction_df[target_city_col] == True]
         city_df["percentile"] = city_df["chipTime_42k"].rank(pct=True) * 100
         percentile = city_df.loc[city_df["runner_id"] == predicted_runner_id, "percentile"].values[0].round(2)
+        total_runners = city_df['runner_id'].nunique()
+        total_rank =  city_df[city_df['percentile']<= percentile]['runner_id'].nunique()
+        percentile = 100 - percentile
 
-        c3 = alt.Chart(city_runners_chart, title = f'You are top {percentile:.2f}% {city} Runners.').mark_bar().encode(
-            x=alt.X("Time:N", axis=alt.Axis(title="Predicted Finish Time", labelAngle=-60)),
+        st.markdown(
+            f"""
+            You ran faster than <span style='font-size:20px; font-weight:bold;'> {percentile:.2f}%</span> of all {city} runners.
+            """,
+            unsafe_allow_html=True,
+            help = f'You place {total_rank} out of {total_runners}.'
+        )
+        c3 = alt.Chart(city_runners_chart).mark_bar(cornerRadiusEnd = cornerRadiusEnd).encode(
+            x=alt.X("Time:N", axis=alt.Axis(title=f"Predicted Finish Time of {city} Runners", labelAngle=-60)),
             y=alt.Y("Total:Q", axis=alt.Axis(title="Number of Runners")),
             color=color
         )
-
-
-        st.altair_chart(c)
-        st.altair_chart(c2)
-        if city == 'Manila':
+        if city in ['Manila', 'Cagayan de Oro']:
             st.altair_chart(c3)
         else:
             pass
