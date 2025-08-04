@@ -169,10 +169,10 @@ if st.button("Predict Marathon Time"):
         percentile = 100 - percentile
         st.markdown(
             f"""
-            You ran faster than  <span style='font-size:20px; font-weight:bold;'> {percentile:.2f}%</span> of all runners.
+            You'll run faster than  <span style='font-size:20px; font-weight:bold;'> {percentile:.2f}%</span> of all runners.
             """,
             unsafe_allow_html=True,
-            help = f'You place {total_rank} out of {total_runners}.'
+            help = f'You will place {total_rank} out of {total_runners}.'
         )
 
         c = alt.Chart(all_runners_chart).mark_bar(cornerRadiusEnd = cornerRadiusEnd).encode(
@@ -191,10 +191,10 @@ if st.button("Predict Marathon Time"):
 
         st.markdown(
             f"""
-            You ran faster than <span style='font-size:20px; font-weight:bold;'> {percentile:.2f}%</span> of all {gender} runners.
+            You'll run faster than <span style='font-size:20px; font-weight:bold;'> {percentile:.2f}%</span> of all {gender} runners.
             """,
             unsafe_allow_html=True,
-            help = f'You place {total_rank} out of {total_runners}.'
+            help = f'You will place {total_rank} out of {total_runners}.'
         )
 
         c2 = alt.Chart(gender_runners_chart).mark_bar(cornerRadiusEnd = cornerRadiusEnd).encode(
@@ -213,10 +213,10 @@ if st.button("Predict Marathon Time"):
 
         st.markdown(
             f"""
-            You ran faster than <span style='font-size:20px; font-weight:bold;'> {percentile:.2f}%</span> of all {city} runners.
+            You'll run faster than <span style='font-size:20px; font-weight:bold;'> {percentile:.2f}%</span> of all {city} runners.
             """,
             unsafe_allow_html=True,
-            help = f'You place {total_rank} out of {total_runners}.'
+            help = f'You will place {total_rank} out of {total_runners}.'
         )
         c3 = alt.Chart(city_runners_chart).mark_bar(cornerRadiusEnd = cornerRadiusEnd).encode(
             x=alt.X("Time:N", axis=alt.Axis(title=f"Predicted Finish Time of {city} Runners", labelAngle=-60)),
