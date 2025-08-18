@@ -20,9 +20,9 @@ A Streamlit app that predicts your **42K marathon finish time** based on your pe
 ---
 
 ## 📈 Example  
-| City   | Gender | Age Group | 10K Time | 21K Time | Predicted 42K Time |
-|--------|--------|-----------|----------|----------|--------------------|
-| Manila | Male   | 30-34     | 00:52:15 | 01:48:42 | 03:57:30           |
+| City   | Gender | Age Group | 10K Time | 21K Time | 32K Time | Predicted 42K Time |
+|--------|--------|-----------|----------|----------|----------|--------------------|
+| Manila | Male   | 30-34     | 00:52:15 | 01:35:35 | 2:15:10  | 03:21:29           |
 
 ---
 
